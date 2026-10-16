@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartas Poéticas & Pensamientos</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Dancing+Script:wght@600;700&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+    <!-- html2canvas for card export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+            color: #f8fafc;
+            overflow-x: hidden;
+            transition: background-color 0.5s ease;
+        }
+
+        /* Clases de Tipografías Especiales */
+        .font-serif-classic { font-family: 'Playfair Display', serif; }
+        .font-handwriting { font-family: 'Dancing Script', cursive; }
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .font-cyber { font-family: 'Space Grotesk', sans-serif; }
+
+        /* Contenedor 3D Perspective */
+        .perspective-container {
+            perspective: 1200px;
+        }
+
+        /* Carta Base */
+        .poetic-card {
+            transform-style: preserve-3d;
+            transition: transform 0.15s ease-out, box-shadow 0.3s ease, border-color 0.3s ease, background 0.5s ease;
+            will-change: transform;
+        }
+
+        /* --- TEMAS VISUALES DE LAS CARTAS --- */
+
+        /* 1. Vintage Paper */
+        .theme-vintage {
+            background: #f4ebd0;
+            background-image: radial-gradient(#e0d3b1 1.5px, transparent 0);
+            background-size: 18px 18px;
+            color: #2c1810;
+            border: 10px solid #e2d2a8;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 0 60px rgba(139, 94, 60, 0.2);
+        }
+        .theme-vintage .card-title {
+            font-family: 'Playfair Display', serif;
+            color: #4a2c11;
+            border-bottom: 2px solid #c4b083;
+        }
+        .theme-vintage .card-body {
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.35rem;
+            line-height: 1.6;
+        }
+        .theme-vintage .card-tag {
+            background-color: #e6d3a7;
+            color: #5c3a1e;
+        }
+
+        /* 2. Lluvia Nocturna (Glassmorphism) */
+        .theme-nocturnal {
+            background: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 20px 50px rgba(2, 6, 23, 0.7), inset 0 0 35px rgba(56, 189, 248, 0.12);
+        }
+        .theme-nocturnal .card-title {
+            font-family: 'Cinzel', serif;
+            color: #38bdf8;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+        }
+        .theme-nocturnal .card-body {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+        }
+        .theme-nocturnal .card-tag {
+            background-color: rgba(56, 189, 248, 0.18);
+            color: #7dd3fc;
+        }
+
+        /* 3. Minimalista Moderno */
+        .theme-minimal {
+            background: #ffffff;
+            color: #0f172a;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .theme-minimal .card-title {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            color: #0f172a;
+            border-bottom: 2px solid #0f172a;
+        }
+        .theme-minimal .card-body {
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+        }
+        .theme-minimal .card-tag {
+            background-color: #f1f5f9;
+            color: #475569;
+        }
+
+        /* 4. Cyber / Neón Etéreo */
+        .theme-cyber {
+            background: linear-gradient(135deg, #130924 0%, #2a0845 100%);
+            color: #f1f5f9;
+            border: 2px solid #ff007f;
+            box-shadow: 0 0 30px rgba(255, 0, 127, 0.35), 0 0 60px rgba(0, 240, 255, 0.18);
+        }
+        .theme-cyber .card-title {
+            font-family: 'Space Grotesk', sans-serif;
+            color: #00f0ff;
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.7);
+            border-bottom: 1px solid #ff007f;
+        }
+        .theme-cyber .card-body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .theme-cyber .card-tag {
+            background-color: rgba(255, 0, 127, 0.2);
+            color: #ff77bc;
+            border: 1px solid rgba(255, 0, 127, 0.4);
+        }
+
+        /* Canvas Partículas */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .card-transition {
+            animation: cardSwap 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes cardSwap {
+            0% { opacity: 0.2; transform: scale(0.92) translateY(15px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between relative selection:bg-rose-500 selection:text-white">
+
+    <!-- Canvas para Partículas Ambientales -->
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="relative z-10 flex flex-col min-h-screen">
+        
+        <!-- HEADER -->
+        <header class="w-full max-w-6xl mx-auto px-4 py-6 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-2.5 bg-rose-500/20 text-rose-400 rounded-2xl border border-rose-500/30 backdrop-blur-md">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        Pensamientos & Versos
+                    </h1>
+                    <p class="text-xs text-slate-400">Cartas poéticas interactivas</p>
+                </div>
+            </div>
+
+            <!-- Selector de Atmósferas Globales -->
+            <div class="flex items-center bg-slate-900/80 p-1.5 rounded-2xl border border-slate-800 backdrop-blur-md shadow-lg overflow-x-auto no-scrollbar max-w-full">
+                <button onclick="setGlobalTheme('vintage')" id="theme-btn-vintage" class="px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#f4ebd0]"></span> Vintage
+                </button>
+                <button onclick="setGlobalTheme('nocturnal')" id="theme-btn-nocturnal" class="px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span> Lluvia
+                </button>
+                <button onclick="setGlobalTheme('minimal')" id="theme-btn-minimal" class="px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-white"></span> Minimal
+                </button>
+                <button onclick="setGlobalTheme('cyber')" id="theme-btn-cyber" class="px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 text-slate-300 hover:text-white whitespace-nowrap flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-pink-500"></span> Neón
+                </button>
+            </div>
+
+            <!-- Filtros & Creador -->
+            <div class="flex items-center gap-2">
+                <!-- Filtro de Favoritos -->
+                <button onclick="toggleFavoritesFilter()" id="fav-filter-btn" class="px-3 py-2 bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-amber-400 rounded-xl border border-slate-800 transition-all flex items-center gap-1.5 text-xs font-medium" title="Filtrar por Favoritos">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                    </svg>
+                    <span id="fav-filter-label">Favoritos</span>
+                </button>
+
+                <button onclick="openNewCardModal()" class="px-4 py-2 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-xl font-medium text-xs sm:text-sm shadow-lg shadow-rose-500/20 transition-all flex items-center gap-2 active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span>Escribir Carta</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- CARTA PRINCIPAL -->
+        <main class="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 my-auto">
+            
+            <div class="perspective-container w-full max-w-xl mx-auto py-2">
+                <div id="card-element" class="poetic-card theme-vintage rounded-2xl p-6 sm:p-8 relative overflow-hidden flex flex-col justify-between min-h-[500px] sm:min-h-[540px] transition-all">
+                    
+                    <!-- Imagen de Portada -->
+                    <div id="card-image-container" class="w-full h-48 sm:h-56 mb-5 rounded-xl overflow-hidden relative shadow-inner group">
+                        <img id="card-image" src="" alt="Ilustración" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" onerror="this.src='https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=800&q=80'">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+                        <span id="card-tag" class="card-tag absolute bottom-3 left-3 text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded-full shadow-sm">
+                            Reflexión
+                        </span>
+                    </div>
+
+                    <!-- Contenido de Texto -->
+                    <div class="flex-1 flex flex-col justify-center my-2 px-1">
+                        <h2 id="card-title" class="card-title text-xl sm:text-2xl font-bold pb-2 mb-3 tracking-tight">
+                            Título
+                        </h2>
+                        <div id="card-body" class="card-body text-sm sm:text-base leading-relaxed whitespace-pre-line opacity-95 mb-4 max-h-56 overflow-y-auto no-scrollbar">
+                            Cargando verso...
+                        </div>
+                    </div>
+
+                    <!-- Footer de Carta -->
+                    <div class="flex items-center justify-between border-t border-black/10 dark:border-white/10 pt-4 mt-2 text-xs opacity-80">
+                        <div>
+                            <p id="card-author" class="font-semibold">Autor</p>
+                            <p id="card-date" class="text-[10px] opacity-70">Fecha</p>
+                        </div>
+
+                        <!-- Acciones Rápidas -->
+                        <div class="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-lg backdrop-blur-sm">
+                            <button onclick="toggleFavoriteCurrentCard(event)" id="card-like-btn" class="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-md transition-colors" title="Marcar Favorito">
+                                <svg id="heart-icon" class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                                </svg>
+                            </button>
+                            <button onclick="copyCardText(event)" class="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-md transition-colors" title="Copiar Poema">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+                            <button onclick="exportCardAsImage(event)" class="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-md transition-colors" title="Descargar Imagen">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- NAVEGACIÓN -->
+            <div class="flex items-center justify-center gap-4 mt-6">
+                <button onclick="prevCard()" class="p-3 bg-slate-900/80 hover:bg-slate-800 text-white rounded-2xl border border-slate-800 shadow-lg backdrop-blur-md transition-all active:scale-90" title="Anterior">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+
+                <div id="card-counter" class="text-xs font-semibold px-4 py-2 bg-slate-900/80 border border-slate-800 rounded-xl text-slate-300">
+                    1 / 4
+                </div>
+
+                <button onclick="nextCard()" class="p-3 bg-slate-900/80 hover:bg-slate-800 text-white rounded-2xl border border-slate-800 shadow-lg backdrop-blur-md transition-all active:scale-90" title="Siguiente">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="w-full text-center py-4 text-xs text-slate-500 border-t border-slate-900">
+            Pasa el ratón sobre la carta para interactuar con la perspectiva 3D.
+        </footer>
+    </div>
+
+    <!-- MODAL CREADOR CON VISTA PREVIA EN TIEMPO REAL -->
+    <div id="create-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-900 border border-slate-800 text-slate-100 rounded-2xl w-full max-w-2xl p-6 shadow-2xl relative transform scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto">
+            
+            <button onclick="closeNewCardModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+
+            <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+                Editor de Pensamientos
+            </h3>
+            <p class="text-xs text-slate-400 mb-6">Redacta y visualiza en tiempo real cómo lucirá tu carta poética.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Formulario -->
+                <form id="new-card-form" onsubmit="handleCreateCard(event)" class="space-y-3.5">
+                    
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Título</label>
+                        <input type="text" id="input-title" oninput="updateLivePreview()" required placeholder="Ej: Viento de Otoño" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500 transition-colors">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Contenido / Poema</label>
+                        <textarea id="input-body" oninput="updateLivePreview()" rows="4" required placeholder="Escribe tu reflexión..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500 transition-colors"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Autor</label>
+                            <input type="text" id="input-author" oninput="updateLivePreview()" placeholder="Tu nombre" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Etiqueta</label>
+                            <input type="text" id="input-tag" oninput="updateLivePreview()" placeholder="Nostalgia" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500 transition-colors">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Atmósfera Visual</label>
+                        <select id="input-theme" onchange="updateLivePreview()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500 transition-colors">
+                            <option value="vintage">Vintage Papel Antiguo</option>
+                            <option value="nocturnal">Lluvia Nocturna</option>
+                            <option value="minimal">Minimalista Moderno</option>
+                            <option value="cyber">Neón / Etéreo</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Imagen de Ilustración</label>
+                        <input type="url" id="input-img-url" oninput="updateLivePreview()" placeholder="https://url-de-imagen.jpg" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500 transition-colors mb-1.5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-slate-400">O subir archivo:</span>
+                            <input type="file" id="input-img-file" onchange="handleFileSelect(event)" accept="image/*" class="text-[10px] text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[10px] file:bg-rose-500/20 file:text-rose-300 hover:file:bg-rose-500/30 cursor-pointer">
+                        </div>
+                    </div>
+
+                    <div class="pt-3 flex justify-end gap-2">
+                        <button type="button" onclick="closeNewCardModal()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="px-4 py-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-semibold shadow-lg shadow-rose-500/20 transition-all">
+                            Guardar Carta
+                        </button>
+                    </div>
+
+                </form>
+
+                <!-- Panel de Vista Previa -->
+                <div class="flex flex-col justify-center items-center bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                    <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-2">Vista Previa en Tiempo Real</span>
+                    <div id="preview-card" class="theme-vintage rounded-xl p-4 w-full h-80 flex flex-col justify-between text-xs overflow-hidden shadow-md">
+                        <div class="h-28 w-full rounded-lg overflow-hidden relative mb-2">
+                            <img id="prev-img" src="https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover">
+                            <span id="prev-tag" class="card-tag absolute bottom-2 left-2 text-[8px] font-bold uppercase px-2 py-0.5 rounded-full">Reflexión</span>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center">
+                            <h4 id="prev-title" class="card-title font-bold text-sm mb-1">Título del Poema</h4>
+                            <p id="prev-body" class="card-body italic opacity-90 line-clamp-3">El contenido apareciendo en tiempo real...</p>
+                        </div>
+                        <div class="border-t border-black/10 dark:border-white/10 pt-2 text-[10px] flex justify-between opacity-80">
+                            <span id="prev-author">Autor</span>
+                            <span>Ahora</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICACIÓN -->
+    <div id="toast-msg" class="fixed bottom-6 right-6 bg-slate-800 border border-slate-700 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <span id="toast-text">Notificación</span>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // BASE DE DATOS INICIAL
+        const DEFAULT_CARDS = [
+            {
+                id: '1',
+                title: 'Ecos del Tiempo',
+                body: 'Hay silencios que guardan más historia que mil palabras.\nEn las tardes grises, el viento susurra promesas\nque el tiempo olvida, pero el corazón conserva.',
+                author: 'Gabriel R.',
+                date: '14 Oct, 2026',
+                tag: 'Nostalgia',
+                theme: 'vintage',
+                image: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=800&q=80',
+                isFavorite: false
+            },
+            {
+                id: '2',
+                title: 'Bajo la Lluvia Nocturna',
+                body: 'Cada gota sobre el cristal dibuja un mapa sin destino.\nCaminamos entre luces neón y sombras efímeras,\nbuscando en el reflejo de la noche un destello de verdad.',
+                author: 'Elena S.',
+                date: '12 Oct, 2026',
+                tag: 'Melancolía',
+                theme: 'nocturnal',
+                image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=80',
+                isFavorite: true
+            },
+            {
+                id: '3',
+                title: 'Arquitectura de un Silencio',
+                body: 'Líneas puras, espacio blanco.\nNo hace falta llenar cada rincón de ruido;\na veces la belleza habita en lo que elegimos no decir.',
+                author: 'M. Vance',
+                date: '08 Oct, 2026',
+                tag: 'Minimalismo',
+                theme: 'minimal',
+                image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=800&q=80',
+                isFavorite: false
+            },
+            {
+                id: '4',
+                title: 'Horizontes Sintéticos',
+                body: 'Luces púrpuras se funden con el crepúsculo digital.\nEn este universo de código y estrellas fugaces,\ntus recuerdos laten en alta frecuencia.',
+                author: 'A. Cyber',
+                date: '01 Oct, 2026',
+                tag: 'Futurista',
+                theme: 'cyber',
+                image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+                isFavorite: true
+            }
+        ];
+
+        let cards = [];
+        let currentIndex = 0;
+        let currentThemeOverride = null;
+        let showOnlyFavorites = false;
+        let customFileImageData = null;
+
+        function initStore() {
+            const stored = localStorage.getItem('poetic_cards_data_v2');
+            if (stored) {
+                try { cards = JSON.parse(stored); } catch(e) { cards = [...DEFAULT_CARDS]; }
+            } else {
+                cards = [...DEFAULT_CARDS];
+            }
+        }
+
+        function saveStore() {
+            localStorage.setItem('poetic_cards_data_v2', JSON.stringify(cards));
+        }
+
+        function getVisibleCards() {
+            if (showOnlyFavorites) {
+                return cards.filter(c => c.isFavorite);
+            }
+            return cards;
+        }
+
+        function renderCard() {
+            const visibleCards = getVisibleCards();
+
+            if (visibleCards.length === 0) {
+                document.getElementById('card-title').textContent = 'Sin cartas';
+                document.getElementById('card-body').textContent = showOnlyFavorites ? 'No tienes cartas marcadas como favoritas todavía.' : 'No hay cartas para mostrar.';
+                document.getElementById('card-counter').textContent = '0 / 0';
+                return;
+            }
+
+            if (currentIndex >= visibleCards.length) currentIndex = 0;
+
+            const card = visibleCards[currentIndex];
+            const cardEl = document.getElementById('card-element');
+
+            // Animación
+            cardEl.classList.remove('card-transition');
+            void cardEl.offsetWidth;
+            cardEl.classList.add('card-transition');
+
+            // Tema
+            const activeTheme = currentThemeOverride || card.theme || 'vintage';
+            cardEl.className = `poetic-card theme-${activeTheme} rounded-2xl p-6 sm:p-8 relative overflow-hidden flex flex-col justify-between min-h-[500px] sm:min-h-[540px] transition-all`;
+
+            // Datos
+            document.getElementById('card-title').textContent = card.title;
+            document.getElementById('card-body').textContent = card.body;
+            document.getElementById('card-author').textContent = card.author || 'Anónimo';
+            document.getElementById('card-date').textContent = card.date || '';
+            document.getElementById('card-tag').textContent = card.tag || 'Reflexión';
+            document.getElementById('card-image').src = card.image || 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=800&q=80';
+
+            // Favorito
+            const heartIcon = document.getElementById('heart-icon');
+            if (card.isFavorite) {
+                heartIcon.setAttribute('fill', 'currentColor');
+                heartIcon.classList.add('text-amber-400');
+                heartIcon.classList.remove('text-slate-400');
+            } else {
+                heartIcon.setAttribute('fill', 'none');
+                heartIcon.classList.remove('text-amber-400');
+                heartIcon.classList.add('text-slate-400');
+            }
+
+            // Contador
+            document.getElementById('card-counter').textContent = `${currentIndex + 1} / ${visibleCards.length}`;
+
+            updateThemeButtonsUI(activeTheme);
+            updateParticleColor(activeTheme);
+        }
+
+        function nextCard() {
+            const visible = getVisibleCards();
+            if (visible.length === 0) return;
+            currentIndex = (currentIndex + 1) % visible.length;
+            renderCard();
+        }
+
+        function prevCard() {
+            const visible = getVisibleCards();
+            if (visible.length === 0) return;
+            currentIndex = (currentIndex - 1 + visible.length) % visible.length;
+            renderCard();
+        }
+
+        function setGlobalTheme(themeName) {
+            currentThemeOverride = themeName;
+            renderCard();
+            showToast(`Atmósfera: ${themeName.toUpperCase()}`);
+        }
+
+        function updateThemeButtonsUI(activeTheme) {
+            ['vintage', 'nocturnal', 'minimal', 'cyber'].forEach(t => {
+                const btn = document.getElementById(`theme-btn-${t}`);
+                if (!btn) return;
+                if (t === activeTheme) {
+                    btn.classList.add('bg-slate-800', 'text-white', 'shadow');
+                    btn.classList.remove('text-slate-300');
+                } else {
+                    btn.classList.remove('bg-slate-800', 'text-white', 'shadow');
+                    btn.classList.add('text-slate-300');
+                }
+            });
+        }
+
+        function toggleFavoritesFilter() {
+            showOnlyFavorites = !showOnlyFavorites;
+            currentIndex = 0;
+            const btn = document.getElementById('fav-filter-btn');
+            if (showOnlyFavorites) {
+                btn.classList.add('border-amber-500/50', 'text-amber-400', 'bg-amber-500/10');
+            } else {
+                btn.classList.remove('border-amber-500/50', 'text-amber-400', 'bg-amber-500/10');
+            }
+            renderCard();
+            showToast(showOnlyFavorites ? 'Mostrando solo favoritos' : 'Mostrando todas las cartas');
+        }
+
+        function toggleFavoriteCurrentCard(e) {
+            e.stopPropagation();
+            const visible = getVisibleCards();
+            if (visible.length === 0) return;
+            
+            visible[currentIndex].isFavorite = !visible[currentIndex].isFavorite;
+            saveStore();
+            renderCard();
+            showToast(visible[currentIndex].isFavorite ? 'Añadido a Favoritos' : 'Eliminado de Favoritos');
+        }
+
+        function copyCardText(e) {
+            e.stopPropagation();
+            const visible = getVisibleCards();
+            if (visible.length === 0) return;
+            const card = visible[currentIndex];
+            const textToCopy = `"${card.title}"\n\n${card.body}\n\n— ${card.author}`;
+
+            const textarea = document.createElement('textarea');
+            textarea.value = textToCopy;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            showToast('Texto copiado al portapapeles');
+        }
+
+        function exportCardAsImage(e) {
+            e.stopPropagation();
+            const cardEl = document.getElementById('card-element');
+            showToast('Generando imagen...');
+
+            html2canvas(cardEl, { scale: 2, useCORS: true, backgroundColor: null }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `carta-poetica.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('¡Imagen descargada!');
+            }).catch(() => showToast('Error al exportar'));
+        }
+
+        // TILT EFFECT 3D
+        const cardElement = document.getElementById('card-element');
+
+        cardElement.addEventListener('mousemove', (e) => {
+            const rect = cardElement.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            cardElement.style.transform = `rotateX(${-y / 18}deg) rotateY(${x / 18}deg) scale3d(1.02, 1.02, 1.02)`;
+        });
+
+        cardElement.addEventListener('mouseleave', () => {
+            cardElement.style.transform = `rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+        });
+
+        // MODAL Y VISTA PREVIA
+        function openNewCardModal() {
+            const modal = document.getElementById('create-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.firstElementChild.classList.remove('scale-95');
+                modal.firstElementChild.classList.add('scale-100');
+            }, 10);
+            updateLivePreview();
+        }
+
+        function closeNewCardModal() {
+            const modal = document.getElementById('create-modal');
+            modal.classList.add('opacity-0');
+            modal.firstElementChild.classList.remove('scale-100');
+            modal.firstElementChild.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.getElementById('new-card-form').reset();
+                customFileImageData = null;
+            }, 300);
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    customFileImageData = evt.target.result;
+                    updateLivePreview();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function updateLivePreview() {
+            const title = document.getElementById('input-title').value.trim() || 'Título del Poema';
+            const body = document.getElementById('input-body').value.trim() || 'Escribe tus versos aquí...';
+            const author = document.getElementById('input-author').value.trim() || 'Tu Nombre';
+            const tag = document.getElementById('input-tag').value.trim() || 'Reflexión';
+            const theme = document.getElementById('input-theme').value;
+            const imgUrl = customFileImageData || document.getElementById('input-img-url').value.trim() || 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=800&q=80';
+
+            const prevCard = document.getElementById('preview-card');
+            prevCard.className = `theme-${theme} rounded-xl p-4 w-full h-80 flex flex-col justify-between text-xs overflow-hidden shadow-md`;
+
+            document.getElementById('prev-title').textContent = title;
+            document.getElementById('prev-body').textContent = body;
+            document.getElementById('prev-author').textContent = author;
+            document.getElementById('prev-tag').textContent = tag;
+            document.getElementById('prev-img').src = imgUrl;
+        }
+
+        function handleCreateCard(e) {
+            e.preventDefault();
+
+            const title = document.getElementById('input-title').value.trim();
+            const body = document.getElementById('input-body').value.trim();
+            const author = document.getElementById('input-author').value.trim() || 'Anónimo';
+            const tag = document.getElementById('input-tag').value.trim() || 'Pensamiento';
+            const theme = document.getElementById('input-theme').value;
+            const imgUrl = customFileImageData || document.getElementById('input-img-url').value.trim();
+
+            const dateStr = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+
+            const newCard = {
+                id: Date.now().toString(),
+                title,
+                body,
+                author,
+                date: dateStr,
+                tag,
+                theme,
+                image: imgUrl || 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=800&q=80',
+                isFavorite: false
+            };
+
+            cards.unshift(newCard);
+            saveStore();
+            currentIndex = 0;
+            currentThemeOverride = null;
+            showOnlyFavorites = false;
+            
+            const favBtn = document.getElementById('fav-filter-btn');
+            favBtn.classList.remove('border-amber-500/50', 'text-amber-400', 'bg-amber-500/10');
+
+            renderCard();
+            closeNewCardModal();
+            showToast('¡Nueva carta poética guardada!');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-msg');
+            document.getElementById('toast-text').textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        // SISTEMA DE PARTÍCULAS
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let particleColor = 'rgba(255, 255, 255, ';
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.3;
+                this.speedY = Math.random() * -0.4 - 0.1;
+                this.opacity = Math.random() * 0.4 + 0.2;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.y < 0 || this.x < 0 || this.x > canvas.width) {
+                    this.y = canvas.height;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+            draw() {
+                ctx.fillStyle = `${particleColor}${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function updateParticleColor(theme) {
+            if (theme === 'vintage') particleColor = 'rgba(212, 175, 55, ';
+            else if (theme === 'nocturnal') particleColor = 'rgba(56, 189, 248, ';
+            else if (theme === 'minimal') particleColor = 'rgba(150, 150, 150, ';
+            else if (theme === 'cyber') particleColor = 'rgba(255, 0, 127, ';
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 40; i++) particles.push(new Particle());
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.onload = function() {
+            initStore();
+            renderCard();
+            initParticles();
+            animateParticles();
+        };
+    </script>
+</body>
+</html>
